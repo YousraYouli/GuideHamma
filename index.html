@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realtime Location Tracker</title>
+
+    <!-- leaflet css  -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+
+        .accuracy-info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <div class="accuracy-info" id="accuracyInfo">Accuracy: Unknown</div>
+
+    <!-- leaflet js  -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Map initialization 
+        var map = L.map('map').setView([14.0860746, 100.608406], 6);
+
+        //osm layer
+        var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        });
+        osm.addTo(map);
+
+        var marker, circle;
+        var watchId = null;
+
+        function initGeolocation() {
+            if (!navigator.geolocation) {
+                console.log("Your browser doesn't support geolocation feature!");
+                alert("Geolocation is not supported by your browser");
+                return;
+            }
+
+            // Clear any existing watch
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+            }
+
+            // Start watching position with high accuracy
+            watchId = navigator.geolocation.watchPosition(
+                getPosition,
+                errorHandler,
+                {
+                    enableHighAccuracy: true,
+                    maximumAge: 30000,
+                    timeout: 27000
+                }
+            );
+        }
+
+        function getPosition(position) {
+            var lat = position.coords.latitude;
+            var long = position.coords.longitude;
+            var accuracy = position.coords.accuracy;
+            var altitude = position.coords.altitude;
+            var altitudeAccuracy = position.coords.altitudeAccuracy;
+            var heading = position.coords.heading;
+            var speed = position.coords.speed;
+
+            // Update accuracy info display
+            document.getElementById('accuracyInfo').textContent = 
+                `Accuracy: ${Math.round(accuracy)} meters`;
+
+            if (marker) {
+                map.removeLayer(marker);
+            }
+
+            if (circle) {
+                map.removeLayer(circle);
+            }
+
+            // Create marker with custom icon
+            marker = L.marker([lat, long], {
+                title: "Your location",
+                alt: "Your location",
+                riseOnHover: true,
+                icon: L.divIcon({
+                    className: 'live-marker',
+                    html: '<div class="pulse"></div>',
+                    iconSize: [20, 20]
+                })
+            }).bindPopup(`
+                <b>Your location</b><br>
+                Latitude: ${lat.toFixed(6)}<br>
+                Longitude: ${long.toFixed(6)}<br>
+                Accuracy: ${Math.round(accuracy)} meters<br>
+                ${altitude ? `Altitude: ${Math.round(altitude)} meters<br>` : ''}
+                ${heading ? `Heading: ${Math.round(heading)}°<br>` : ''}
+                ${speed ? `Speed: ${Math.round(speed * 3.6)} km/h<br>` : ''}
+                Updated: ${new Date(position.timestamp).toLocaleTimeString()}
+            `);
+
+            // Create accuracy circle
+            circle = L.circle([lat, long], {
+                radius: accuracy,
+                color: '#3388ff',
+                weight: 1,
+                fillColor: '#3388ff',
+                fillOpacity: 0.2
+            });
+
+            var featureGroup = L.featureGroup([marker, circle]).addTo(map);
+            map.fitBounds(featureGroup.getBounds(), { maxZoom: 18 });
+
+            console.log("Position update:", {
+                latitude: lat,
+                longitude: long,
+                accuracy: accuracy,
+                altitude: altitude,
+                heading: heading,
+                speed: speed,
+                timestamp: new Date(position.timestamp)
+            });
+        }
+
+        function errorHandler(err) {
+            var errorMessage;
+            switch(err.code) {
+                case err.PERMISSION_DENIED:
+                    errorMessage = "Error: Access is denied! Please enable location permissions.";
+                    break;
+                case err.POSITION_UNAVAILABLE:
+                    errorMessage = "Error: Position is unavailable!";
+                    break;
+                case err.TIMEOUT:
+                    errorMessage = "Error: Request timed out!";
+                    break;
+                case err.UNKNOWN_ERROR:
+                    errorMessage = "Error: An unknown error occurred!";
+                    break;
+            }
+            
+            console.error(errorMessage);
+            alert(errorMessage);
+            
+            // Update accuracy info display
+            document.getElementById('accuracyInfo').textContent = errorMessage;
+        }
+
+        // Add custom CSS for pulsing marker
+        var style = document.createElement('style');
+        style.textContent = `
+            .live-marker .pulse {
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: #3388ff;
+                position: relative;
+                box-shadow: 0 0 0 0 rgba(51, 136, 255, 1);
+                animation: pulse 2s infinite;
+            }
+            
+            @keyframes pulse {
+                0% {
+                    transform: scale(0.95);
+                    box-shadow: 0 0 0 0 rgba(51, 136, 255, 0.7);
+                }
+                70% {
+                    transform: scale(1);
+                    box-shadow: 0 0 0 10px rgba(51, 136, 255, 0);
+                }
+                100% {
+                    transform: scale(0.95);
+                    box-shadow: 0 0 0 0 rgba(51, 136, 255, 0);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize geolocation when page loads
+        window.onload = initGeolocation;
+    </script>
+</body>
+</html>
