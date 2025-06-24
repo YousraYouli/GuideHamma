@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Location Tracker + Search + Routing</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+
+  <style>
+    body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    #map { width: 100%; height: 100vh; }
+    .accuracy-info {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      z-index: 1000;
+      background: white;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+    .live-marker .pulse {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #3388ff;
+      position: relative;
+      box-shadow: 0 0 0 0 rgba(51, 136, 255, 1);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(51, 136, 255, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(51, 136, 255, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(51, 136, 255, 0); }
+    }
+{% comment %}  {% endcomment %}
+  .checkpoint-label {
+    background: yellow;
+    color: black;
+    font-weight: bold;
+    font-size: 14px;
+    border-radius: 4px;
+    padding: 2px 4px;
+  }
+
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div class="accuracy-info" id="accuracyInfo">Accuracy: Unknown</div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.min.js"></script>
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+  <script>
+    let map = L.map('map').setView([36.75, 3.05], 17);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Track live position
+    let marker, circle;
+    let routeControl = null;
+    let currentLatLng = null;
+
+    function initGeolocation() {
+      if (!navigator.geolocation) {
+        alert("Geolocation is not supported");
+        return;
+      }
+
+      navigator.geolocation.watchPosition(position => {
+        const { latitude, longitude, accuracy } = position.coords;
+        currentLatLng = [latitude, longitude];
+
+        document.getElementById('accuracyInfo').textContent = `Accuracy: ${Math.round(accuracy)} meters`;
+
+        if (marker) map.removeLayer(marker);
+        if (circle) map.removeLayer(circle);
+
+        marker = L.marker(currentLatLng, {
+          icon: L.divIcon({
+            className: 'live-marker',
+            html: '<div class="pulse"></div>',
+            iconSize: [20, 20]
+          })
+        }).addTo(map).bindPopup(`You are here<br>Lat: ${latitude.toFixed(5)}<br>Lng: ${longitude.toFixed(5)}`);
+
+        circle = L.circle(currentLatLng, {
+          radius: accuracy,
+          color: '#3388ff',
+          fillColor: '#3388ff',
+          fillOpacity: 0.2
+        }).addTo(map);
+
+        const group = L.featureGroup([marker, circle]);
+        map.fitBounds(group.getBounds(), { maxZoom: 16 });
+      }, error => {
+        document.getElementById('accuracyInfo').textContent = "Error getting location.";
+        alert("Error: " + error.message);
+      }, {
+        enableHighAccuracy: true,
+        maximumAge: 30000,
+        timeout: 27000
+      });
+    }
+
+
+////////////////////////////////////////////////////////////////////
+// Load roads with visible thick red lines
+fetch('roads.json')
+  .then(res => res.json())
+  .then(data => {
+    L.geoJSON(data, {
+      style: {
+        color: 'red',
+        weight: 5,
+        opacity: 0.9
+      }
+    }).addTo(map);
+  });
+
+// Load checkpoints with BIG labeled markers
+fetch('checkpoints.json')
+  .then(res => res.json())
+  .then(data => {
+    L.geoJSON(data, {
+      pointToLayer: (feature, latlng) => {
+        const marker = L.circleMarker(latlng, {
+          radius: 10,
+          fillColor: 'blue',
+          color: 'white',
+          weight: 2,
+          fillOpacity: 0.9
+        });
+
+        // Add a permanent label with the checkpoint name
+        const label = L.tooltip({
+          permanent: true,
+          direction: 'top',
+          className: 'checkpoint-label'
+        })
+        .setContent(feature.properties.name)
+        .setLatLng(latlng);
+
+        marker.bindTooltip(label);
+        return marker;
+      }
+    }).addTo(map);
+  });
+
+////////////////////////////////////////////////////////////////////////
+//Convert Roads GeoJSON to a Graph
+
+function buildGraph(roadsGeojson) {
+  const graph = {};
+
+  roadsGeojson.features.forEach(feature => {
+    if (feature.geometry.type === 'LineString') {
+      const coords = feature.geometry.coordinates;
+
+      for (let i = 0; i < coords.length - 1; i++) {
+        const from = coords[i].join(',');
+        const to = coords[i + 1].join(',');
+        const distance = haversineDistance(
+          { lat: coords[i][1], lng: coords[i][0] },
+          { lat: coords[i+1][1], lng: coords[i+1][0] }
+        );
+
+        if (!graph[from]) graph[from] = [];
+        if (!graph[to]) graph[to] = [];
+
+        graph[from].push({ node: to, distance });
+        graph[to].push({ node: from, distance }); // bidirectional
+      }
+    }
+  });
+
+  return graph;
+}
+
+    // =========================
+// 1. Haversine Distance Function
+// =========================
+function haversineDistance(latlng1, latlng2) {
+  const R = 6371000; // Earth's radius in meters
+  const rad = Math.PI / 180;
+  const dLat = (latlng2.lat - latlng1.lat) * rad;
+  const dLng = (latlng2.lng - latlng1.lng) * rad;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(latlng1.lat * rad) * Math.cos(latlng2.lat * rad) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+// =========================
+// 2. Distance Point Logic (click + search)
+// =========================
+let distancePoints = [];
+
+function addPoint(latlng, label = '') {
+  L.marker(latlng).addTo(map).bindPopup(label || `Lat: ${latlng.lat.toFixed(5)}, Lng: ${latlng.lng.toFixed(5)}`).openPopup();
+
+  distancePoints.push(latlng);
+
+  if (distancePoints.length === 2) {
+    const d = haversineDistance(distancePoints[0], distancePoints[1]);
+
+    L.polyline(distancePoints, {
+      color: 'green',
+      weight: 4
+    }).addTo(map).bindPopup(`Distance: ${d.toFixed(2)} m`).openPopup();
+
+    alert(`Distance: ${d.toFixed(2)} meters`);
+    distancePoints = [];
+  }
+}
+
+// =========================
+// 3. Geocoder (Search Box)
+// =========================
+const geocoder = L.Control.geocoder({
+  defaultMarkGeocode: false
+})
+.on('markgeocode', function(e) {
+  const latlng = e.geocode.center;
+  addPoint(latlng, e.geocode.name);
+})
+.addTo(map);
+
+// =========================
+// 4. Manual map click
+// =========================
+map.on('click', function(e) {
+  addPoint(e.latlng);
+});
+
+
+    window.onload = initGeolocation;
+  </script>
+</body>
+</html>
