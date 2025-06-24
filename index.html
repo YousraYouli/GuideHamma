@@ -5,33 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Realtime Location Tracker</title>
+    <link rel="stylesheet" href="styles.css">
 
     <!-- leaflet css  -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
 
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-        }
-
-        #map {
-            width: 100%;
-            height: 100vh;
-        }
-
-        .accuracy-info {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            z-index: 1000;
-            background: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-        }
-    </style>
 </head>
 
 <body>
@@ -42,7 +20,7 @@
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script>
         // Map initialization 
-        var map = L.map('map').setView([14.0860746, 100.608406], 6);
+        var map = L.map('map').setView([36.75, 3.06], 6);
 
         //osm layer
         var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -71,7 +49,7 @@
                 errorHandler,
                 {
                     enableHighAccuracy: true,
-                    maximumAge: 30000,
+                    maximumAge: 0,
                     timeout: 27000
                 }
             );
@@ -91,12 +69,12 @@
                 `Accuracy: ${Math.round(accuracy)} meters`;
 
             if (marker) {
-                map.removeLayer(marker);
+                marker.setLatLng([lat,long]);
+                circle.setLatLng([lat, long]).setRadius(accuracy);
             }
 
-            if (circle) {
-                map.removeLayer(circle);
-            }
+            else {
+
 
             // Create marker with custom icon
             marker = L.marker([lat, long], {
@@ -106,7 +84,7 @@
                 icon: L.divIcon({
                     className: 'live-marker',
                     html: '<div class="pulse"></div>',
-                    iconSize: [20, 20]
+                    iconSize: [10, 10]
                 })
             }).bindPopup(`
                 <b>Your location</b><br>
@@ -128,8 +106,10 @@
                 fillOpacity: 0.2
             });
 
-            var featureGroup = L.featureGroup([marker, circle]).addTo(map);
-            map.fitBounds(featureGroup.getBounds(), { maxZoom: 18 });
+                marker.addTo(map);
+                circle.addTo(map);
+                map.fitBounds(L.featureGroup([marker, circle]).getBounds(), { maxZoom: 18 });
+        }
 
             console.log("Position update:", {
                 latitude: lat,
@@ -195,6 +175,28 @@
             }
         `;
         document.head.appendChild(style);
+
+        fetch('data/roads.geojson')
+        .then(res => res.json())
+        .then(data => {
+            L.geoJSON(data).addTo(map);
+        });
+
+        fetch('data/points.geojson')
+    .then(res => res.json())
+    .then(data => {
+        L.geoJSON(data, {
+            onEachFeature: function (feature, layer) {
+                if (feature.properties) {
+                    let popupContent = `<b>Checkpoint ${feature.properties.name || ''}</b><br>`;
+                    
+                    
+                    layer.bindPopup(popupContent);
+                }
+            }
+        }).addTo(map);
+    });
+
 
         // Initialize geolocation when page loads
         window.onload = initGeolocation;
