@@ -1,0 +1,220 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Entrée Principale du Jardin",
+          "celebrity_rank": 9,
+          "description": "Entrée principale historique du jardin botanique",
+          "image": "/static/images/5969984381319760593.jpg"
+        },
+        "geometry": {
+          "coordinates": [3.072866677193673, 36.7468386861365],
+          "type": "Point"
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Place de la Fontaine Centrale",
+          "celebrity_rank": 8,
+          "description": "Zone de fontaine décorative au centre du jardin",
+          "image": "/static/images/5969984381319760593.jpg"
+
+        },
+        "geometry": {
+          "coordinates": [3.0732996076154677, 36.74868721711543],
+          "type": "Point"
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Section Arboretum",
+          "celebrity_rank": 7,
+          "description": "Arboretum de 20 hectares avec diverses espèces d'arbres",
+          "image": "/static/images/5969984381319760593.jpg"
+
+        },
+        "geometry": {
+          "coordinates": [3.0762071924945644, 36.74979365654836],
+          "type": "Point"
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Point de Vue du Monument",
+          "celebrity_rank": 9,
+          "description": "Point de vue donnant sur le Monument des Martyrs",
+          "image": "/static/images/5969984381319760593.jpg"
+
+        },
+        "geometry": {
+          "coordinates": [3.077177484815138, 36.74658806435565],
+          "type": "Point"
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Section Plantes Exotiques",
+          "celebrity_rank": 6,
+          "description": "Collection d'espèces végétales rares et exotiques",
+          "image": "/static/images/5969984381319760593.jpg"
+
+        },
+        "geometry": {
+          "coordinates": [3.0751041758292956, 36.74722579599002],
+          "type": "Point"
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Roseraie",
+          "celebrity_rank": 5,
+          "description": "Belle collection de roses",
+          "image": "/static/images/5969984381319760593.jpg"
+
+        },
+        "geometry": {
+          "coordinates": [3.0749059364597144, 36.746754419774305],
+          "type": "Point"
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Avenue des Palmiers",
+          "celebrity_rank": 7,
+          "description": "Allée emblématique bordée de palmiers",
+          "image": "/static/images/5969984381319760593.jpg"
+
+        },
+        "geometry": {
+          "coordinates": [3.0763496693708134, 36.74676583059026],
+          "type": "Point"
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Entrée du Petit Zoo",
+          "celebrity_rank": 8,
+          "description": "Entrée de la section zoo du jardin",
+          "image": "/static/images/5969984381319760593.jpg"
+
+        },
+        "geometry": {
+          "coordinates": [3.074357558425419, 36.74794059682715],
+          "type": "Point"
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Jardin de Cactus",
+          "celebrity_rank": 4,
+          "description": "Zone de collection de cactus et plantes grasses",
+          "image": "/static/images/5969984381319760593.jpg"
+
+        },
+        "geometry": {
+          "coordinates": [3.0759639128191907, 36.748400488033326],
+          "type": "Point"
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Section Plantes Médicinales",
+          "celebrity_rank": 5,
+          "description": "Collection éducative de plantes médicinales",
+          "image": "/static/images/5969984381319760593.jpg"
+
+        },
+        "geometry": {
+          "coordinates": [3.072888950985032, 36.74817974706322],
+          "type": "Point"
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Bosquet de Bambous",
+          "celebrity_rank": 6,
+          "description": "Zone paisible de forêt de bambous",
+          "image": "/static/images/5969984381319760593.jpg"
+
+        },
+        "geometry": {
+          "coordinates": [3.072975003852406, 36.74930703377585],
+          "type": "Point"
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Sentier du Musée",
+          "celebrity_rank": 7,
+          "description": "Sentier menant aux musées d'art voisins",
+          "image": "/static/images/5969984381319760593.jpg"
+
+        },
+        "geometry": {
+          "coordinates": [3.0776690030273244, 36.74798997525973],
+          "type": "Point"
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Complexe des Serres",
+          "celebrity_rank": 6,
+          "description": "Zone de culture végétale à climat contrôlé"
+        },
+        "geometry": {
+          "coordinates": [3.0770934307211633, 36.75013530064753],
+          "type": "Point"
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Zone Amphithéâtre",
+          "celebrity_rank": 5,
+          "description": "Amphithéâtre naturel pour événements"
+        },
+        "geometry": {
+          "coordinates": [3.074911872685078, 36.750095054905856],
+          "type": "Point"
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Jardin Aquatique",
+          "celebrity_rank": 6,
+          "description": "Plantes aquatiques et jeux d'eau"
+        },
+        "geometry": {
+          "coordinates": [3.074044908609551, 36.750054510688116],
+          "type": "Point"
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Zone de Repos Ombragée",
+          "celebrity_rank": 4,
+          "description": "Endroit paisible avec bancs pour se reposer"
+        },
+        "geometry": {
+          "coordinates": [3.073898402118317, 36.74926201776344],
+          "type": "Point"
+        }
+      }
+    ]
+  }

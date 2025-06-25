@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dijkstra Route Map</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map { height: 100vh; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        const map = L.map('map').setView([36.7468, 3.0729], 17);
+
+        let pathLayer;
+        let userMarker = null;
+        let userCircle = null;
+        let watchId = null;
+
+        let startCoord = null;
+        let endCoord = null;
+        let startMarker = null;
+        let endMarker = null;
+        let pointsGeoJSON = null;  // Will hold points.json data
+
+        // Add base tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19
+        }).addTo(map);
+
+        // Load points.json (all red points)
+        fetch("{{ url_for('static', filename='points.json') }}")
+            .then(res => res.json())
+            .then(data => {
+                pointsGeoJSON = data;
+
+                L.geoJSON(data, {
+                    pointToLayer: (feature, latlng) =>
+                        L.circleMarker(latlng, { radius: 4, color: "red" })
+                }).addTo(map);
+            });
+
+        // Fixed start point
+        const fixedStartCoord = [36.7468, 3.0729]; // lat, lon
+        const fixedStartMarker = L.marker(fixedStartCoord).addTo(map).bindPopup("Start").openPopup();
+
+        // Helper: Find feature by clicked coordinates
+        function findFeatureByCoord(coord, geojsonData) {
+            if (!geojsonData) return null;
+            for (let feature of geojsonData.features) {
+                let pointCoord = feature.geometry.coordinates;
+                let lngDiff = Math.abs(pointCoord[0] - coord[1]);
+                let latDiff = Math.abs(pointCoord[1] - coord[0]);
+                if (lngDiff < 0.0001 && latDiff < 0.0001) {
+                    return feature;
+                }
+            }
+            return null;
+        }
+
+        // Click handler for start → end → reset
+        map.on("click", function (e) {
+            const latlng = [e.latlng.lat, e.latlng.lng];
+
+            // If an end point was already selected, reset
+            if (endMarker) {
+                map.removeLayer(endMarker);
+                endMarker = null;
+            }
+            if (pathLayer) {
+                map.removeLayer(pathLayer);
+                pathLayer = null;
+            }
+
+            endCoord = latlng;
+
+           // ==== Get feature from JSON ====
+let feature = findFeatureByCoord(latlng, pointsGeoJSON);
+let popupContent = "";
+
+if (feature) {
+    let name = feature.properties.name || "Selected Point";
+    let description = feature.properties.description || "";
+    let imgSrc = feature.properties.image || "";
+
+    popupContent = `<b>${name}</b>`;
+
+    if (description) {
+        popupContent += `<br><i>${description}</i>`;
+    }
+
+    if (imgSrc) {
+        popupContent += `<br><img src="${image}" alt="${name}" style="width:120px; height:auto;">`;
+    }
+} else {
+    popupContent = "Selected location (no data found)";
+}
+
+endMarker = L.marker(latlng).addTo(map).bindPopup(popupContent).openPopup();
+
+            // Send fixed start + clicked end to backend
+            fetch("/route", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    start_coord: [fixedStartCoord[1], fixedStartCoord[0]], // lon, lat
+                    end_coord: [endCoord[1], endCoord[0]]
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                pathLayer = L.geoJSON(data, {
+                    style: feature => {
+                        if (feature.geometry.type === "LineString") {
+                            return { color: "blue", weight: 4 };
+                        }
+                    },
+                    pointToLayer: (feature, latlng) => {
+                        return L.circleMarker(latlng, {
+                            radius: 3,
+                            color: "blue",
+                            fillOpacity: 1
+                        });
+                    },
+                    onEachFeature: (feature, layer) => {
+                        if (feature.properties.type === "checkpoint") {
+                            // Optionally: layer.bindPopup("Checkpoint");
+                        }
+                    }
+                }).addTo(map);
+            })
+            .catch(() => alert("No path found or server error."));
+        });
+
+        // Geolocation tracking (optional)
+        function initGeolocation() {
+            if (!navigator.geolocation) {
+                alert("Geolocation is not supported by your browser.");
+                return;
+            }
+
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+            }
+
+            watchId = navigator.geolocation.watchPosition(updatePosition, handleGeolocationError, {
+                enableHighAccuracy: true,
+                maximumAge: 0,
+                timeout: 27000
+            });
+        }
+
+        function updatePosition(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+            const latlng = [lat, lon];
+
+            if (userMarker) {
+                userMarker.setLatLng(latlng);
+                userCircle.setLatLng(latlng);
+                userCircle.setRadius(accuracy);
+            } else {
+                userMarker = L.marker(latlng).addTo(map).bindPopup("You are here").openPopup();
+                userCircle = L.circle(latlng, {
+                    radius: accuracy,
+                    color: "green",
+                    fillOpacity: 0.3
+                }).addTo(map);
+                map.setView(latlng, 17);
+            }
+        }
+
+        function handleGeolocationError(err) {
+            console.warn(`Geolocation error (${err.code}): ${err.message}`);
+        }
+
+        initGeolocation();
+    </script>
+</body>
+</html>

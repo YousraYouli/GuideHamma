@@ -1,0 +1,145 @@
+:root {
+    --green: #5F8B5B;
+    --light-green: #EDEFEA;
+    --dark-green: #3D6D3D;
+    --active-green: #168354;
+    --gray: #f0f0f0;
+    --border: #ddd;
+}
+
+body {
+    background: white;
+    font-family: 'Segoe UI', sans-serif;
+    padding: 20px;
+}
+
+.container {
+    max-width: 360px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+h2 {
+    color: var(--green);
+    text-align: center;
+}
+
+p {
+    text-align: center;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.problem-types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+.report-btn {
+    flex: 1 1 40%;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background: var(--gray);
+    color: #333;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.report-btn.active {
+    background: var(--active-green);
+    color: white;
+}
+
+label {
+    font-size: 0.9em;
+    color: #333;
+    margin-top: 10px;
+}
+
+.location-box {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: white;
+}
+
+#location {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    font-size: 0.9em;
+    outline: none;
+}
+
+.detect {
+    background: transparent;
+    color: var(--green);
+    font-size: 0.85em;
+    padding: 0 10px;
+    cursor: pointer;
+}
+
+textarea {
+    width: 100%;
+    padding: 10px;
+    font-size: 0.9em;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    resize: none;
+}
+
+.photo-options {
+    display: flex;
+    gap: 10px;
+    flex-direction: column;
+}
+
+.photo-options button {
+    padding: 10px;
+    font-size: 0.9em;
+    background-color: var(--gray);
+    border: none;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    justify-content: center;
+}
+
+.photo-options button:hover {
+    background: #e0e0e0;
+}
+
+a {
+    text-decoration: none;
+    /* Ceci enlève le soulignement */ }
+.btn-report {
+    background: var(--green);
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-report:hover {
+    background: var(--dark-green); }

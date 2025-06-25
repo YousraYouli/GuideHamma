@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dijkstra Shortest Path Map - El Hamma Garden</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map { height: 100vh; }
+        
+        .info-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            max-width: 300px;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .celebrity-stars {
+            color: #ffd700;
+            font-size: 16px;
+        }
+        
+        .point-marker {
+            background-color: #ff6b6b;
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        .point-marker.high-celebrity {
+            background-color: #ffd93d;
+            box-shadow: 0 0 15px rgba(255, 217, 61, 0.6);
+        }
+        
+        .point-marker.medium-celebrity {
+            background-color: #6bcf7f;
+        }
+        
+        .point-marker.low-celebrity {
+            background-color: #4ecdc4;
+        }
+        
+        .accuracy-info {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        
+        .pulse {
+            width: 20px;
+            height: 20px;
+            background-color: #3388ff;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="accuracyInfo" class="accuracy-info">Getting location...</div>
+    
+    <div id="infoPanel" class="info-panel">
+        <h3 id="pointName"></h3>
+        <div id="celebrityRank"></div>
+        <p id="pointDescription"></p>
+        <div id="coordinatesInfo"></div>
+        <div id="distanceInfo"></div>
+        <div id="timeInfo"></div>
+        <button onclick="closeInfoPanel()" style="float: right; margin-top: 10px;">Fermer</button>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        const map = L.map('map').setView([36.7468, 3.0729], 17);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        let marker, circle, watchId = null;
+        let pointsLayer = L.layerGroup().addTo(map);
+        
+        // Geolocation functions
+        function initGeolocation() {
+            if (!navigator.geolocation) {
+                alert("Geolocation is not supported by your browser.");
+                return;
+            }
+
+            if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+
+            watchId = navigator.geolocation.watchPosition(getPosition, errorHandler, {
+                enableHighAccuracy: true,
+                maximumAge: 0,
+                timeout: 27000
+            });
+        }
+
+        function getPosition(position) {
+            const { latitude: lat, longitude: lng, accuracy, altitude, heading, speed } = position.coords;
+
+            document.getElementById('accuracyInfo').textContent = `Précision: ${Math.round(accuracy)} mètres`;
+
+            if (marker) {
+                marker.setLatLng([lat, lng]);
+                circle.setLatLng([lat, lng]).setRadius(accuracy);
+            } else {
+                marker = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        className: 'live-marker',
+                        html: '<div class="pulse"></div>',
+                        iconSize: [20, 20]
+                    })
+                }).bindPopup(`
+                    <b>Votre position</b><br>
+                    Latitude: ${lat.toFixed(6)}<br>
+                    Longitude: ${lng.toFixed(6)}<br>
+                    Précision: ${Math.round(accuracy)} mètres<br>
+                    ${altitude ? `Altitude: ${Math.round(altitude)} m<br>` : ''}
+                    ${heading ? `Direction: ${Math.round(heading)}°<br>` : ''}
+                    ${speed ? `Vitesse: ${Math.round(speed * 3.6)} km/h<br>` : ''}
+                    Mis à jour: ${new Date(position.timestamp).toLocaleTimeString()}
+                `);
+
+                circle = L.circle([lat, lng], {
+                    radius: accuracy,
+                    color: '#3388ff',
+                    weight: 1,
+                    fillColor: '#3388ff',
+                    fillOpacity: 0.2
+                });
+
+                marker.addTo(map);
+                circle.addTo(map);
+                map.fitBounds(L.featureGroup([marker, circle]).getBounds(), { maxZoom: 18 });
+            }
+        }
+
+        function errorHandler(error) {
+            document.getElementById('accuracyInfo').textContent = `Erreur de localisation: ${error.message}`;
+        }
+
+        // Load and display points
+        function loadPoints() {
+            fetch('/points')
+                .then(response => response.json())
+                .then(data => {
+                    data.features.forEach(feature => {
+                        const coords = feature.geometry.coordinates;
+                        const props = feature.properties;
+                        
+                        // Determine marker style based on celebrity rank
+                        let markerClass = 'point-marker';
+                        if (props.celebrity_rank >= 8) {
+                            markerClass += ' high-celebrity';
+                        } else if (props.celebrity_rank >= 6) {
+                            markerClass += ' medium-celebrity';
+                        } else {
+                            markerClass += ' low-celebrity';
+                        }
+                        
+                        const pointMarker = L.marker([coords[1], coords[0]], {
+                            icon: L.divIcon({
+                                className: markerClass,
+                                html: `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;">${props.celebrity_rank}</div>`,
+                                iconSize: [30, 30],
+                                iconAnchor: [15, 15]
+                            })
+                        });
+                        
+                        // Add click event to show info panel
+                        pointMarker.on('click', function() {
+                            showPointInfo(coords);
+                        });
+                        
+                        // Add popup with basic info
+                        pointMarker.bindPopup(`
+                            <b>${props.name}</b><br>
+                            ${props.description}<br>
+                            <div class="celebrity-stars">${'★'.repeat(props.celebrity_rank)}${'☆'.repeat(10-props.celebrity_rank)}</div>
+                            <small>Cliquez pour plus d'infos</small>
+                        `);
+                        
+                        pointsLayer.addLayer(pointMarker);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading points:', error);
+                });
+        }
+        
+        // Show detailed point information
+        function showPointInfo(coordinates) {
+            fetch('/point_info', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    coordinates: coordinates
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Aucune information disponible pour ce point');
+                    return;
+                }
+                
+                // Populate info panel
+                document.getElementById('pointName').textContent = data.name;
+                document.getElementById('celebrityRank').innerHTML = `
+                    <div class="celebrity-stars">
+                        ${'★'.repeat(data.celebrity_rank)}${'☆'.repeat(10-data.celebrity_rank)} 
+                        (${data.celebrity_rank}/10)
+                    </div>
+                `;
+                document.getElementById('pointDescription').textContent = data.description;
+                document.getElementById('coordinatesInfo').innerHTML = `
+                    <strong>Coordonnées:</strong><br>
+                    Latitude: ${data.coordinates.latitude.toFixed(6)}<br>
+                    Longitude: ${data.coordinates.longitude.toFixed(6)}
+                `;
+                document.getElementById('distanceInfo').innerHTML = `
+                    <strong>Distance depuis le départ:</strong><br>
+                    ${data.distance_from_start.meters} mètres<br>
+                    ${data.distance_from_start.kilometers} kilomètres
+                `;
+                document.getElementById('timeInfo').innerHTML = `
+                    <strong>Temps de marche estimé:</strong><br>
+                    ${data.estimated_walking_time.formatted}<br>
+                    <small>(vitesse moyenne: 5 km/h)</small>
+                `;
+                
+                // Show info panel
+                document.getElementById('infoPanel').style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error fetching point info:', error);
+                alert('Erreur lors du chargement des informations');
+            });
+        }
+        
+        function closeInfoPanel() {
+            document.getElementById('infoPanel').style.display = 'none';
+        }
+        
+        // Route calculation (existing functionality)
+        function calculateRoute(endCoord) {
+            fetch('/route', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    end_coord: endCoord
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Aucun chemin trouvé');
+                    return;
+                }
+                
+                L.geoJSON(data, {
+                    style: { 
+                        color: 'blue', 
+                        weight: 4,
+                        opacity: 0.8
+                    }
+                }).addTo(map).bindPopup(`
+                    <b>Itinéraire calculé</b><br>
+                    Distance: ${data.features[0].properties.total_distance} mètres<br>
+                    Temps estimé: ${data.features[0].properties.estimated_time} minutes
+                `);
+            })
+            .catch(error => {
+                console.error('Error calculating route:', error);
+            });
+        }
+        
+        // Map click event for route calculation
+        map.on('click', function(e) {
+            if (e.originalEvent.ctrlKey) { // Hold Ctrl and click to calculate route
+                calculateRoute([e.latlng.lng, e.latlng.lat]);
+            }
+        });
+        
+        // Initialize everything
+        initGeolocation();
+        loadPoints();
+        
+        // Add start marker
+        L.marker([36.7468, 3.0729], {
+            icon: L.divIcon({
+                className: 'start-marker',
+                html: '<div style="background-color: green; color: white; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-weight: bold;">S</div>',
+                iconSize: [25, 25],
+                iconAnchor: [12, 12]
+            })
+        }).addTo(map).bindPopup("Point de départ").openPopup();
+        
+        // Add instructions
+        const info = L.control({position: 'topleft'});
+        info.onAdd = function() {
+            const div = L.DomUtil.create('div', 'info');
+            div.innerHTML = `
+                <div style="background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">
+                    <h4>Instructions:</h4>
+                    <small>
+                        • Cliquez sur un point pour voir ses détails<br>
+                        • Ctrl + Clic pour calculer un itinéraire<br>
+                        • Les chiffres indiquent la célébrité (1-10)
+                    </small>
+                </div>
+            `;
+            return div;
+        };
+        info.addTo(map);
+        
+    </script>
+</body>
+</html>

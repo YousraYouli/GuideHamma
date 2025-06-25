@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dijkstra Route Map</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map { height: 100vh; }
+        .custom-control {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div class="custom-control">
+        <button id="newTourBtn">Start New Tour</button>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        const map = L.map('map').setView([36.7468, 3.0729], 17);
+        let pathLayer;
+        let userMarker = null;
+        let userCircle = null;
+        let watchId = null;
+        let endMarker = null;
+
+        // Add base tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19
+        }).addTo(map);
+
+        // Fixed start point (must match backend)
+        const fixedStartCoord = [36.7468, 3.0729]; // lat, lon
+        const fixedStartMarker = L.marker(fixedStartCoord).addTo(map).bindPopup("Start").openPopup();
+
+        // Show all red points from points.json
+        fetch("/static/points.json")
+            .then(res => res.json())
+            .then(data => {
+                window.pointsData = data; // Store for later use
+                L.geoJSON(data, {
+                    pointToLayer: (feature, latlng) =>
+                        L.circleMarker(latlng, { radius: 4, color: "red" })
+                }).addTo(map);
+                
+                // Load tour stops from session storage and calculate path
+                loadTourStops();
+            });
+
+        // Function to calculate and display path
+        function calculatePath(endCoord) {
+            // Clear existing path and marker
+            if (pathLayer) map.removeLayer(pathLayer);
+            if (endMarker) map.removeLayer(endMarker);
+
+            // Add end marker
+            endMarker = L.marker(endCoord).addTo(map).bindPopup("Destination").openPopup();
+
+            // Send request to backend
+            fetch("/route", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    start_coord: [fixedStartCoord[1], fixedStartCoord[0]], // lon, lat
+                    end_coord: [endCoord[1], endCoord[0]]
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                pathLayer = L.geoJSON(data, {
+                    style: feature => {
+                        if (feature.geometry.type === "LineString") {
+                            return { color: "blue", weight: 4 };
+                        }
+                    },
+                    pointToLayer: (feature, latlng) => {
+                        return L.circleMarker(latlng, {
+                            radius: 3,
+                            color: "blue",
+                            fillOpacity: 1
+                        });
+                    }
+                }).addTo(map);
+                
+                // Fit map to show the entire route
+                if (data.features && data.features.length > 0) {
+                    const bounds = pathLayer.getBounds();
+                    map.fitBounds(bounds);
+                }
+            })
+            .catch(() => alert("No path found or server error."));
+        }
+
+        // Load tour stops from session storage
+        function loadTourStops() {
+            const tourStops = JSON.parse(sessionStorage.getItem('tourStops') || [];
+            if (tourStops.length > 0) {
+                // Find the first destination in points data
+                const firstDestination = tourStops[0];
+                const destinationFeature = window.pointsData.features.find(f => 
+                    f.properties.name && f.properties.name.toLowerCase().includes(firstDestination.toLowerCase())
+                );
+
+                if (destinationFeature) {
+                    const endCoord = [
+                        destinationFeature.geometry.coordinates[1],
+                        destinationFeature.geometry.coordinates[0]
+                    ];
+                    calculatePath(endCoord);
+                } else {
+                    alert("Destination not found in our map data");
+                }
+            }
+        }
+
+        // New tour button
+        document.getElementById('newTourBtn').addEventListener('click', function() {
+            sessionStorage.removeItem('tourStops');
+            window.location.href = "/preferences";
+        });
+
+        // Click handler for manual destination selection
+        map.on("click", function (e) {
+            const latlng = [e.latlng.lat, e.latlng.lng];
+            calculatePath(latlng);
+        });
+
+        // Geolocation functions
+        function initGeolocation() {
+            if (!navigator.geolocation) {
+                alert("Geolocation is not supported by your browser.");
+                return;
+            }
+
+            watchId = navigator.geolocation.watchPosition(updatePosition, handleGeolocationError, {
+                enableHighAccuracy: true,
+                maximumAge: 0,
+                timeout: 27000
+            });
+        }
+
+        function updatePosition(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+            const latlng = [lat, lon];
+
+            if (userMarker) {
+                userMarker.setLatLng(latlng);
+                userCircle.setLatLng(latlng);
+                userCircle.setRadius(accuracy);
+            } else {
+                userMarker = L.marker(latlng).addTo(map).bindPopup("You are here").openPopup();
+                userCircle = L.circle(latlng, {
+                    radius: accuracy,
+                    color: "green",
+                    fillOpacity: 0.3
+                }).addTo(map);
+            }
+        }
+
+        function handleGeolocationError(err) {
+            console.warn(`Geolocation error (${err.code}): ${err.message}`);
+        }
+
+        // Start geolocation tracking
+        initGeolocation();
+    </script>
+</body>
+</html>

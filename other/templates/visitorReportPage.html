@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Tour's Report</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+
+    <!-- Your Stylesheet -->
+    <link rel="stylesheet" href="../css/visitorReportPage.css">
+</head>
+
+<body>
+
+    <div class="report-container">
+        <h1>Your Tour's Report</h1>
+
+        <main class="report-content">
+            <!-- Statistics Card -->
+            <section class="report-card stats-card">
+                <div class="card-image-container">
+                    <!-- IMPORTANT: Change "map.png" to your map image file -->
+                    <img src="../assets/map.jpg" alt="A winding road map showing a tour journey.">
+                </div>
+                <div class="card-text-container">
+                    <h2>Statistics</h2>
+                    <ul>
+                        <li><strong>Date:</strong> 25 June 2025</li>
+                        <li><strong>Tour time:</strong> 20 min</li>
+                        <li><strong>Tour distance:</strong> 20km</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Location Card 1 (French Garden) -->
+            <section class="report-card location-card">
+                <div class="card-image-container">
+                    <!-- IMPORTANT: Change "french-garden.jpg" to your image file -->
+                    <img src="../assets/french-garden.jpg" alt="A large, ancient tree trunk in a lush garden.">
+                </div>
+                <div class="card-text-container">
+                    <div class="location-title">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <h2>French Garden</h2>
+                    </div>
+                    <p>from the Tassili n'Ajjer plateau in southeastern Algeria. This UNESCO World Heritage site boasts
+                        over 15,000 prehistoric drawings and engravings, depicting climatic changes, animal migrations,
+                        and human life from 6000 BC.</p>
+                </div>
+            </section>
+
+            <!-- Location Card 2 (English Garden) - Reversed Layout -->
+            <section class="report-card location-card reverse-layout">
+                <div class="card-image-container">
+                    <!-- IMPORTANT: Change "english-garden.jpg" to your image file -->
+                    <img src="../assets/english-garden.jpg" alt="A white marble statue of a religious figure.">
+                </div>
+                <div class="card-text-container">
+                    <div class="location-title">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <h2>English Garden</h2>
+                    </div>
+                    <p>a religious figure or historical personage, placed within a lush green environment. There's a
+                        plaque at its base, likely providing information about the statue itself or the person it
+                        represents</p>
+                </div>
+            </section>
+        </main>
+
+        <button class="share-button">Share Your Report</button>
+    </div>
+
+    <!-- Your Script -->
+    <script src="../js/visitorReportPage.js"></script>
+
+</body>
+
+</html>

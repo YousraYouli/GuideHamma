@@ -1,0 +1,177 @@
+:root {
+    --primary-green: #48784a;
+    --button-green: #67945c;
+    --light-green-bg: #f3f9f2;
+    --page-bg: #eaf2ea;
+    --text-primary: #333333;
+    --text-secondary: #5f5f5f;
+    --card-shadow: rgba(0, 0, 0, 0.05);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--page-bg);
+    color: var(--text-primary);
+    display: flex;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+
+.report-container {
+    width: 100%;
+    max-width: 600px;
+    position: relative;
+    overflow: hidden;
+    /* Contains the blob */
+    padding-top: 1rem;
+}
+
+/* Decorative background blob */
+.report-container::before {
+    content: '';
+    position: absolute;
+    top: -150px;
+    right: -150px;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, var(--primary-green) 0%, rgba(255, 255, 255, 0) 70%);
+    opacity: 0.1;
+    z-index: 0;
+}
+
+h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-green);
+    text-align: center;
+    margin-bottom: 2rem;
+    position: relative;
+    z-index: 1;
+}
+
+.report-card {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    background-color: var(--light-green-bg);
+    padding: 20px;
+    border-radius: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 15px var(--card-shadow);
+}
+
+.card-image-container {
+    flex: 1;
+    /* Takes up half the space */
+    min-width: 120px;
+}
+
+.card-image-container img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 15px;
+    /* Rounded corners for location images */
+}
+
+.stats-card .card-image-container img {
+    border-radius: 0;
+    /* Map image has no rounded corners */
+}
+
+.card-text-container {
+    flex: 1;
+    /* Takes up the other half */
+}
+
+.card-text-container h2 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--primary-green);
+    margin-bottom: 10px;
+}
+
+.card-text-container ul {
+    list-style: none;
+    font-size: 0.95rem;
+    line-height: 1.8;
+}
+
+.card-text-container p {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+}
+
+.location-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.location-title i {
+    color: var(--primary-green);
+    font-size: 1.4rem;
+}
+
+/* Modifier class to reverse the layout */
+.reverse-layout {
+    flex-direction: row-reverse;
+}
+
+.share-button {
+    display: block;
+    width: 100%;
+    max-width: 300px;
+    margin: 30px auto;
+    padding: 18px;
+    background-color: var(--button-green);
+    border: none;
+    border-radius: 100px;
+    /* Fully rounded button */
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.share-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive adjustments for mobile screens */
+@media (max-width: 550px) {
+
+    .report-card,
+    .reverse-layout {
+        flex-direction: column;
+        /* Stack image and text vertically */
+        text-align: center;
+    }
+
+    .card-text-container {
+        width: 100%;
+    }
+
+    .location-title {
+        justify-content: center;
+    }
+
+    .card-text-container ul {
+        text-align: left;
+        padding-left: 20px;
+    }
+}

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+
+    <!-- I'm assuming this path is correct for your project -->
+    <link rel="stylesheet" href="../css/settingsPage.css">
+</head>
+
+<body>
+
+    <div class="app-container">
+        <main class="main-content">
+            <h1>Settings</h1>
+
+            <ul class="settings-list">
+                <li>
+                    <!-- The Language selector doesn't need to navigate, so href="#" is fine here -->
+                    <a href="#" class="setting-item">
+                        <i class="fas fa-globe"></i>
+                        <span>Language</span>
+                        <div class="language-selector">
+                            <select name="language">
+                                <option value="english">English</option>
+                                <option value="spanish">Spanish</option>
+                                <option value="french">French</option>
+                            </select>
+                            <i class="fas fa-chevron-down select-arrow"></i>
+                        </div>
+                    </a>
+                </li>
+                <li>
+                    <!-- CHANGED: Gave the link a real destination. An empty href="" just reloads the page. -->
+                    <a href="visitorReportPage.html" class="setting-item">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Visitor Report</span>
+                        <i class="fas fa-chevron-right arrow"></i>
+                    </a>
+                </li>
+                <li>
+                    <a href="problemReportingPage.html" class="setting-item report-problem">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span>Report a Problem</span>
+                        <i class="fas fa-chevron-right arrow"></i>
+                    </a>
+                </li>
+                <li>
+                    <!-- CHANGED: Gave the link a real destination. -->
+                    <a href="privacyPolicyPage.html" class="setting-item">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Privacy Policy</span>
+                        <i class="fas fa-chevron-right arrow"></i>
+                    </a>
+                </li>
+                <li>
+                    <!-- CHANGED: Gave the link a real destination. -->
+                    <a href="aboutAppPage.html" class="setting-item">
+                        <i class="fas fa-info-circle"></i>
+                        <span>About App</span>
+                        <span class="version-info">Version 1.0.0</span>
+                        <i class="fas fa-chevron-right arrow"></i>
+                    </a>
+                </li>
+                <li>
+                    <a href="feedbackPage.html" class="setting-item">
+                        <i class="fas fa-comment-dots"></i>
+                        <span>Send Feedback</span>
+                        <i class="fas fa-chevron-right arrow"></i>
+                    </a>
+                </li>
+            </ul>
+        </main>
+
+        <nav class="bottom-nav">
+            <!-- CHANGED: Gave the bottom nav links real destinations. -->
+            <a href="tourTypePage.html">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </a>
+            <a href="visitorReportPage.html">
+                <i class="fas fa-compass"></i>
+                <span>Explore</span>
+            </a>
+            <!-- This is the current page, so href="#" is okay, but a real link is better. -->
+            <a href="settingsPage.html" class="active">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- 
+        CHANGED: This script was preventing the links from working. 
+        It has been commented out to allow the browser's default navigation.
+    -->
+    <!-- <script src="../js/settingsPage.js"></script> -->
+
+</body>
+
+</html>
