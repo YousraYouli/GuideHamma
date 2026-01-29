@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dijkstra Shortest Path Map</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map { height: 100vh; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        const map = L.map('map').setView([36.7468, 3.0729], 17);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19
+        }).addTo(map);
+        
+///////////////////////////////////////////////////////////////////////
+let marker, circle, watchId = null;
+
+function initGeolocation() {
+  if (!navigator.geolocation) {
+    alert("Geolocation is not supported by your browser.");
+    return;
+  }
+
+  if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+
+  watchId = navigator.geolocation.watchPosition(getPosition, errorHandler, {
+    enableHighAccuracy: true,
+    maximumAge: 0,
+    timeout: 27000
+  });
+}
+
+
+    // function getPosition(position) {
+      const { latitude: lat, longitude: lng, accuracy, altitude, heading, speed } = position.coords;
+
+      document.getElementById('accuracyInfo').textContent = `Accuracy: ${Math.round(accuracy)} meters`;
+
+      if (marker) {
+        marker.setLatLng([lat, lng]);
+        circle.setLatLng([lat, lng]).setRadius(accuracy);
+      } else {
+        marker = L.marker([lat, lng], {
+          icon: L.divIcon({
+            className: 'live-marker',
+            html: '<div class="pulse"></div>',
+            iconSize: [20, 20]
+          })
+        }).bindPopup(`
+          <b>Your location</b><br>
+          Latitude: ${lat.toFixed(6)}<br>
+          Longitude: ${lng.toFixed(6)}<br>
+          Accuracy: ${Math.round(accuracy)} meters<br>
+          ${altitude ? `Altitude: ${Math.round(altitude)} m<br>` : ''}
+          ${heading ? `Heading: ${Math.round(heading)}°<br>` : ''}
+          ${speed ? `Speed: ${Math.round(speed * 3.6)} km/h<br>` : ''}
+          Updated: ${new Date(position.timestamp).toLocaleTimeString()}
+        `);
+
+        circle = L.circle([lat, lng], {
+          radius: accuracy,
+          color: '#3388ff',
+          weight: 1,
+          fillColor: '#3388ff',
+          fillOpacity: 0.2
+        });
+
+        marker.addTo(map);
+        circle.addTo(map);
+        map.fitBounds(L.featureGroup([marker, circle]).getBounds(), { maxZoom: 18 });
+      }
+
+      console.log("Position update:", position.coords); 
+    
+///////////////////////////////////////////////////////////////////////
+        // Load shortest path GeoJSON
+        fetch('shortest_path.geojson')
+            .then(res => res.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    style: { color: 'blue', weight: 4 }
+                }).addTo(map);
+            });
+
+        // Optional: add fixed markers
+        L.marker([36.7468, 3.0729]).addTo(map).bindPopup("Start").openPopup();
+        L.marker([36.7472, 3.0741]).addTo(map).bindPopup("End");
+    </script>
+</body>
+</html>
